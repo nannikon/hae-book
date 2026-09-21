@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { track } from '@vercel/analytics';
 
-const amazon = 'https://www.amazon.com/dp/B0HKDYG29Z';
+const amazon = '/amazon';
 
 const chapters = [
   'Welcome to Norway. Good luck.',
