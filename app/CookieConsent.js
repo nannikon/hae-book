@@ -6,33 +6,51 @@ const CONSENT_KEY = 'hae-cookie-consent';
 const META_PIXEL_ID = '1114579474558989';
 
 function loadMetaPixel() {
-  if (typeof window === 'undefined' || window.fbq) return;
+  if (typeof window === 'undefined') return;
 
-  !(function (f, b, e, v, n, t, s) {
-    if (f.fbq) return;
-    n = f.fbq = function () {
-      n.callMethod
-        ? n.callMethod.apply(n, arguments)
-        : n.queue.push(arguments);
-    };
-    if (!f._fbq) f._fbq = n;
-    n.push = n;
-    n.loaded = true;
-    n.version = '2.0';
-    n.queue = [];
-    t = b.createElement(e);
-    t.async = true;
-    t.src = v;
-    s = b.getElementsByTagName(e)[0];
-    s.parentNode.insertBefore(t, s);
-  })(
-    window,
-    document,
-    'script',
-    'https://connect.facebook.net/en_US/fbevents.js'
-  );
+  // If Meta Pixel has not been created yet, create it and load Meta's script.
+  if (!window.fbq) {
+    !(function (f, b, e, v, n, t, s) {
+      if (f.fbq) return;
 
-  window.fbq('init', META_PIXEL_ID);
+      n = f.fbq = function () {
+        n.callMethod
+          ? n.callMethod.apply(n, arguments)
+          : n.queue.push(arguments);
+      };
+
+      if (!f._fbq) f._fbq = n;
+
+      n.push = n;
+      n.loaded = true;
+      n.version = '2.0';
+      n.queue = [];
+
+      t = b.createElement(e);
+      t.async = true;
+      t.src = v;
+      t.id = 'meta-pixel-script';
+
+      s = b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t, s);
+    })(
+      window,
+      document,
+      'script',
+      'https://connect.facebook.net/en_US/fbevents.js'
+    );
+  }
+
+  // Consent has been granted.
+  window.fbq('consent', 'grant');
+
+  // Initialize this Pixel only once per page load.
+  if (!window.__haeMetaPixelInitialized) {
+    window.fbq('init', META_PIXEL_ID);
+    window.__haeMetaPixelInitialized = true;
+  }
+
+  // Fire the page view after consent.
   window.fbq('track', 'PageView');
 }
 
@@ -55,13 +73,16 @@ export default function CookieConsent() {
 
   function acceptCookies() {
     localStorage.setItem(CONSENT_KEY, 'accepted');
+
     setConsent('accepted');
     setShowBanner(false);
+
     loadMetaPixel();
   }
 
   function rejectCookies() {
     localStorage.setItem(CONSENT_KEY, 'rejected');
+
     setConsent('rejected');
     setShowBanner(false);
   }
@@ -72,10 +93,12 @@ export default function CookieConsent() {
 
   function withdrawConsent() {
     localStorage.setItem(CONSENT_KEY, 'rejected');
+
     setConsent('rejected');
     setShowBanner(false);
 
-    // Prevent additional Meta events during this visit.
+    // Stop Meta from receiving additional consent-based events
+    // during the current page session.
     if (window.fbq) {
       window.fbq('consent', 'revoke');
     }
@@ -87,6 +110,7 @@ export default function CookieConsent() {
         <div
           role="dialog"
           aria-label="Cookie settings"
+          aria-modal="true"
           style={{
             position: 'fixed',
             left: '20px',
@@ -165,6 +189,24 @@ export default function CookieConsent() {
               Reject marketing
             </button>
           </div>
+
+          {consent === 'accepted' && (
+            <button
+              type="button"
+              onClick={withdrawConsent}
+              style={{
+                marginTop: '12px',
+                padding: 0,
+                background: 'transparent',
+                color: '#333',
+                border: 'none',
+                textDecoration: 'underline',
+                cursor: 'pointer',
+              }}
+            >
+              Withdraw marketing consent
+            </button>
+          )}
         </div>
       )}
 
@@ -187,22 +229,6 @@ export default function CookieConsent() {
           }}
         >
           Cookie settings
-        </button>
-      )}
-
-      {showBanner && consent === 'accepted' && (
-        <button
-          type="button"
-          onClick={withdrawConsent}
-          style={{
-            marginTop: '10px',
-            background: 'transparent',
-            border: 'none',
-            textDecoration: 'underline',
-            cursor: 'pointer',
-          }}
-        >
-          Withdraw marketing consent
         </button>
       )}
     </>
