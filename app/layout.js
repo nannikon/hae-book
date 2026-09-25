@@ -63,3 +63,6 @@ export default function RootLayout({ children }) {
     />
   </noscript>
 </body>
+</html>
+);
+}
