@@ -1,5 +1,6 @@
 import './globals.css';
 import { Analytics } from '@vercel/analytics/react';
+import CookieConsent from './CookieConsent';
 
 export const metadata = {
   metadataBase: new URL('https://hae-book.vercel.app'),
@@ -37,6 +38,7 @@ export default function RootLayout({ children }) {
       <body>
         {children}
         <Analytics />
+        <CookieConsent />
       </body>
     </html>
   );
